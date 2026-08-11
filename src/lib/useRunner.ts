@@ -76,6 +76,9 @@ export function useRunner(segments: Segment[], sound: SoundSettings): Runner {
     remainingRef.current = (list[clamped]?.duration ?? 0) * 1000;
     lastTickRef.current = -1;
     doneRef.current = false;
+    // Every manual move lands paused, so you're never dropped mid-countdown
+    // into a segment you haven't set up for.
+    runningRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -129,8 +132,8 @@ export function useRunner(segments: Segment[], sound: SoundSettings): Runner {
     ensureAudio(); // Browsers only allow this from a user gesture.
 
     if (doneRef.current) {
+      // Restart rewinds and waits — same as every other manual move.
       seek(0);
-      runningRef.current = true;
     } else {
       runningRef.current = !runningRef.current;
     }
@@ -151,9 +154,17 @@ export function useRunner(segments: Segment[], sound: SoundSettings): Runner {
     [publish, seek],
   );
 
+  /**
+   * The one move that keeps playing if it was playing. Skipping is something
+   * you do mid-set — "this one's done, go" — where every other move is a
+   * deliberate reposition you want to set up for first.
+   */
   const skipNext = useCallback(() => {
-    jumpTo(indexRef.current + 1);
-  }, [jumpTo]);
+    const wasRunning = runningRef.current;
+    seek(indexRef.current + 1);
+    runningRef.current = wasRunning;
+    publish();
+  }, [publish, seek]);
 
   /** Restarts the current segment unless you're right at its start. */
   const skipPrev = useCallback(() => {

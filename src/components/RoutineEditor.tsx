@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { HomeIcon } from "./HomeIcon";
 import { NumberField } from "./NumberField";
 import { saveRoutine } from "@/lib/store";
+import { useDragList } from "@/lib/useDragList";
 import {
   blockDuration,
   emptyExercise,
@@ -18,8 +20,6 @@ import {
 
 export function RoutineEditor({ initial }: { initial: Routine | null }) {
   const router = useRouter();
-  const [dragId, setDragId] = useState<string | null>(null);
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [routine, setRoutine] = useState<Routine>(
     () =>
       initial ?? {
@@ -56,6 +56,8 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
     });
   }
 
+  const drag = useDragList(routine.blocks, moveTo);
+
   function addBlock(block: Block) {
     setRoutine((r) => ({ ...r, blocks: [...r.blocks, block] }));
   }
@@ -75,9 +77,10 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
     <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-14">
       <Link
         href="/"
-        className="text-sm text-zinc-500 transition hover:text-zinc-200"
+        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-200"
       >
-        ← Routines
+        <HomeIcon />
+        Home
       </Link>
 
       <input
@@ -99,38 +102,18 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
         {routine.blocks.map((block, index) => (
           <li
             key={block.id}
-            // Only draggable while the header strip is held, so text selection
-            // inside the fields keeps working normally.
-            draggable={dragId === block.id}
-            onDragStart={(e) => {
-              setDragIndex(index);
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData("text/plain", block.id);
-            }}
-            onDragOver={(e) => {
-              e.preventDefault();
-              if (dragIndex === null || dragIndex === index) return;
-              // Reorder live under the cursor rather than only on drop.
-              moveTo(dragIndex, index);
-              setDragIndex(index);
-            }}
-            onDrop={(e) => e.preventDefault()}
-            onDragEnd={() => {
-              setDragId(null);
-              setDragIndex(null);
-            }}
+            {...drag.rowProps(block.id)}
             className={`rounded-xl border p-4 transition ${
-              dragIndex === index ? "opacity-50" : ""
+              drag.dragId === block.id ? "opacity-40" : ""
             } ${
               block.type === "exercise"
                 ? "border-emerald-900/60 bg-emerald-950/20"
-                : "border-sky-900/60 bg-sky-950/20"
+                : "border-purple-900/60 bg-purple-950/20"
             }`}
           >
             {/* The header strip is the drag handle. */}
             <div
-              onPointerDown={() => setDragId(block.id)}
-              onPointerUp={() => setDragId(null)}
+              {...drag.handleProps(block.id)}
               title="Drag to reorder"
               className="flex cursor-grab select-none items-center gap-2 active:cursor-grabbing"
             >
@@ -138,7 +121,7 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
                 className={`rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
                   block.type === "exercise"
                     ? "bg-emerald-500/15 text-emerald-300"
-                    : "bg-sky-500/15 text-sky-300"
+                    : "bg-purple-500/15 text-purple-300"
                 }`}
               >
                 {block.type === "exercise" ? "Set" : "Break"}
@@ -147,7 +130,7 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
                 {formatDuration(blockDuration(block))}
               </span>
               <div
-                onPointerDown={(e) => e.stopPropagation()}
+                {...drag.stopArming}
                 className="ml-auto flex cursor-default items-center gap-1 text-zinc-500"
               >
                 <button
@@ -181,12 +164,19 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
 
             {block.type === "exercise" ? (
               <>
-                <input
-                  value={block.name}
-                  onChange={(e) => patchBlock(block.id, { name: e.target.value })}
-                  placeholder="Set name"
-                  className="mt-3 w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm outline-none transition placeholder:text-zinc-700 focus:border-emerald-600"
-                />
+                {/* Labelled like the number fields below it, so the card reads
+                    as one row of fields. */}
+                <label className="mt-3 flex flex-col gap-1.5">
+                  <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                    Name
+                  </span>
+                  <input
+                    value={block.name}
+                    onChange={(e) => patchBlock(block.id, { name: e.target.value })}
+                    placeholder="Set name"
+                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm outline-none transition placeholder:text-zinc-700 focus:border-emerald-600"
+                  />
+                </label>
                 <div className="mt-3 flex gap-3">
                   <NumberField
                     label="Reps"
@@ -210,23 +200,14 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
               </>
             ) : (
               <div className="mt-3 flex gap-3">
-                <label className="flex flex-[2] flex-col gap-1.5">
-                  <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                    Label
-                  </span>
-                  <input
-                    value={block.name}
-                    onChange={(e) => patchBlock(block.id, { name: e.target.value })}
-                    placeholder="Break"
-                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm outline-none transition placeholder:text-zinc-700 focus:border-sky-600"
-                  />
-                </label>
                 <NumberField
                   label="Length"
                   suffix="sec"
                   value={block.durationSec}
                   onChange={(durationSec) => patchBlock(block.id, { durationSec })}
                 />
+                {/* Keeps the field the same width as the ones on a Set card. */}
+                <div className="flex-[2]" />
               </div>
             )}
           </li>
@@ -244,7 +225,7 @@ export function RoutineEditor({ initial }: { initial: Routine | null }) {
         <button
           type="button"
           onClick={() => addBlock(emptyRest())}
-          className="flex-1 rounded-lg border border-dashed border-sky-900 py-3 text-sm font-medium text-sky-300 transition hover:border-sky-700 hover:bg-sky-950/30"
+          className="flex-1 rounded-lg border border-dashed border-purple-900 py-3 text-sm font-medium text-purple-300 transition hover:border-purple-700 hover:bg-purple-950/30"
         >
           + Break
         </button>

@@ -70,6 +70,18 @@ export function deleteRoutine(id: string): Routine[] {
   return routines;
 }
 
+/** Stored order is display order, so reordering is just a splice. */
+export function moveRoutine(from: number, to: number): Routine[] {
+  const routines = loadRoutines();
+  if (from === to || from < 0 || to < 0 || from >= routines.length || to >= routines.length) {
+    return routines;
+  }
+  const [moved] = routines.splice(from, 1);
+  routines.splice(to, 0, moved);
+  saveRoutines(routines);
+  return routines;
+}
+
 export function getRoutine(id: string): Routine | null {
   return loadRoutines().find((r) => r.id === id) ?? null;
 }
@@ -146,12 +158,8 @@ function sanitizeBlocks(value: unknown): Block[] {
     const id = typeof b.id === "string" ? b.id : newId();
 
     if (b.type === "rest") {
-      blocks.push({
-        id,
-        type: "rest",
-        name: typeof b.name === "string" ? b.name : "Break",
-        durationSec: num(b.durationSec, 60),
-      });
+      // Older exports carried a name here; it's dropped on read.
+      blocks.push({ id, type: "rest", durationSec: num(b.durationSec, 60) });
     } else if (b.type === "exercise") {
       blocks.push({
         id,

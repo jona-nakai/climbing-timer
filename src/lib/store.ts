@@ -6,6 +6,7 @@ import {
   importRoutines as importToStorage,
   loadRoutines,
   loadSound,
+  moveRoutine as moveInStorage,
   saveSound,
   upsertRoutine as upsertToStorage,
   defaultSound,
@@ -90,6 +91,11 @@ export function saveRoutine(routine: Routine): void {
 
 export function removeRoutine(id: string): void {
   routineCache = deleteFromStorage(id);
+  emit();
+}
+
+export function reorderRoutines(from: number, to: number): void {
+  routineCache = moveInStorage(from, to);
   emit();
 }
 

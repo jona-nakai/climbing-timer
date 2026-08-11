@@ -7,10 +7,10 @@ export type ExerciseBlock = {
   restSec: number;
 };
 
+/** A break has no name — it's always just a break, and the colour says so. */
 export type RestBlock = {
   id: string;
   type: "rest";
-  name: string;
   durationSec: number;
 };
 
@@ -24,15 +24,26 @@ export type Routine = {
   updatedAt: number;
 };
 
+/**
+ * - `work`   — a rep (green)
+ * - `rest`   — the generated break *between* reps (blue)
+ * - `break`  — a standalone break block (purple)
+ */
+export type SegmentKind = "work" | "rest" | "break";
+
 /** One countdown in the flattened timeline the runner actually plays. */
 export type Segment = {
   key: string;
   blockId: string;
   blockIndex: number;
-  kind: "work" | "rest";
+  kind: SegmentKind;
   label: string;
   detail: string;
   duration: number;
+  /** 1-based rep this segment is (or, for a break, leads into). 0 off a set. */
+  rep: number;
+  /** Reps in the owning set; 0 for a break block. */
+  reps: number;
 };
 
 export function newId(): string {
@@ -53,7 +64,7 @@ export function emptyExercise(): ExerciseBlock {
 }
 
 export function emptyRest(): RestBlock {
-  return { id: newId(), type: "rest", name: "Break", durationSec: 60 };
+  return { id: newId(), type: "rest", durationSec: 60 };
 }
 
 /** Flatten a routine into the timeline of countdowns. */
@@ -67,10 +78,12 @@ export function expandRoutine(routine: Routine): Segment[] {
         key: `${block.id}:rest`,
         blockId: block.id,
         blockIndex,
-        kind: "rest",
-        label: block.name || "Break",
+        kind: "break",
+        label: "Break",
         detail: "",
         duration: block.durationSec,
+        rep: 0,
+        reps: 0,
       });
       return;
     }
@@ -86,6 +99,8 @@ export function expandRoutine(routine: Routine): Segment[] {
           label: block.name || "Set",
           detail: reps > 1 ? `${rep + 1} / ${reps}` : "",
           duration: block.workSec,
+          rep: rep + 1,
+          reps,
         });
       }
       // Rests sit *between* reps, so the block never ends on one.
@@ -95,10 +110,14 @@ export function expandRoutine(routine: Routine): Segment[] {
           blockId: block.id,
           blockIndex,
           kind: "rest",
-          label: "Break",
+          // Keeps the set's name on screen through its own breaks; the colour
+          // and the sub-line say it's a break.
+          label: block.name || "Set",
           // Which rep comes next when the break ends.
           detail: `${rep + 2} / ${reps}`,
           duration: block.restSec,
+          rep: rep + 2,
+          reps,
         });
       }
     }

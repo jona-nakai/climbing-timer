@@ -10,7 +10,8 @@ A **routine** is a list of **blocks**:
 - **Set** — a name, a rep count, a duration, and the break between reps.
   Breaks are generated *between* reps only, so a block never ends on one.
   `3 reps × 30s / 20s break` = 130s.
-- **Break** — a standalone named break, for the longer gap between sets.
+- **Break** — a standalone break, for the longer gap between sets. Just a
+  duration; it carries no name of its own.
 
 At run time the routine is flattened into a timeline of countdowns
 (`src/lib/types.ts` → `expandRoutine`). The sidebar still shows blocks, and each
@@ -21,16 +22,30 @@ one jumps to the first countdown inside it.
 The space-bar plays and pauses — it's the only key bound, so you can hit it blind
 mid-hang. On screen: **Back** steps to the previous segment, or says **Reset**
 and restarts the current one once it's a second in; **Skip** jumps forward.
+**Skip** carries the play state with it — it's a mid-set "this one's done, go".
+Everything else — back, reset, restart, a sidebar jump — lands paused, since it's
+a deliberate reposition you want to set up for.
 
-Green means work, blue means break — there's no text label for the two, the
-colour carries it. Transition beeps and the 3·2·1 countdown live in Settings
-(gear, top of the sidebar) and are remembered across sessions; turn both off for
+Colour carries the stage: green is work, blue is the break between reps, purple
+is a standalone break block. The title names the set you're in, or — on a break
+block, under an `UP NEXT` tag — the one you're heading into. Below it sits the
+rep bar — one cell per rep, the active one filling with
+the countdown, the next one pulsing through a break. A break block has no reps,
+so that slot carries the set it leads into instead, drawn in that set's colour.
+
+The sidebar parks the running block near the top, so what's below it is what's
+still to come; blocks snap to that same line when you scroll by hand, and
+clicking the block you're already on just brings it back there without touching
+the countdown. It collapses on both desktop and mobile. Transition beeps and the
+3·2·1 countdown live in Settings
+(gear, foot of the sidebar) and are remembered across sessions; turn both off for
 a silent run. The screen is kept awake while a routine is running, where the
 browser supports it.
 
 ## Storage
 
-Routines live in `localStorage` — no accounts, no server. Export and Import on
+Routines live in `localStorage` — no accounts, no server. Stored order is display
+order, so dragging a routine (or a block) writes straight through. Export and Import on
 the home page move them between browsers as JSON; imported routines get fresh
 ids, so importing never overwrites what's already there.
 

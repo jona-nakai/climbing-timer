@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { importRoutineFile, removeRoutine, useRoutines } from "@/lib/store";
+import { useEffect, useRef, useState, type HTMLAttributes } from "react";
+import {
+  importRoutineFile,
+  removeRoutine,
+  reorderRoutines,
+  useRoutines,
+} from "@/lib/store";
 import { exportRoutine } from "@/lib/storage";
+import { useDragList } from "@/lib/useDragList";
 import { formatDuration, routineDuration, type Routine } from "@/lib/types";
 
 export default function HomePage() {
@@ -11,6 +17,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const drag = useDragList(routines, reorderRoutines);
 
   async function handleImport(file: File) {
     setError(null);
@@ -34,30 +41,7 @@ export default function HomePage() {
         New routine
       </Link>
 
-      {error && (
-        <p className="mt-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-200">
-          {error}
-        </p>
-      )}
-
-      {routines.length === 0 ? (
-        <p className="mt-6 rounded-xl border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
-          No routines yet.
-        </p>
-      ) : (
-        <ul className="mt-4 flex flex-col gap-2.5">
-          {routines.map((routine) => (
-            <RoutineRow
-              key={routine.id}
-              routine={routine}
-              open={menuFor === routine.id}
-              setMenuFor={setMenuFor}
-            />
-          ))}
-        </ul>
-      )}
-
-      <div className="mt-6 text-center">
+      <div className="mt-3 text-center">
         <button
           type="button"
           onClick={() => fileInput.current?.click()}
@@ -66,6 +50,38 @@ export default function HomePage() {
           Import a routine
         </button>
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-3 text-sm text-red-200">
+          {error}
+        </p>
+      )}
+
+      {routines.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-dashed border-zinc-800 px-6 py-12 text-center text-sm text-zinc-500">
+          No routines yet.
+        </p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-2.5">
+          {routines.map((routine, index) => (
+            <RoutineRow
+              key={routine.id}
+              routine={routine}
+              index={index}
+              count={routines.length}
+              dragging={drag.dragId === routine.id}
+              dragProps={{
+                ...drag.rowProps(routine.id),
+                ...drag.handleProps(routine.id),
+              }}
+              stopArming={drag.stopArming}
+              open={menuFor === routine.id}
+              setMenuFor={setMenuFor}
+            />
+          ))}
+        </ul>
+      )}
+
       <input
         ref={fileInput}
         type="file"
@@ -83,10 +99,20 @@ export default function HomePage() {
 
 function RoutineRow({
   routine,
+  index,
+  count,
+  dragging,
+  dragProps,
+  stopArming,
   open,
   setMenuFor,
 }: {
   routine: Routine;
+  index: number;
+  count: number;
+  dragging: boolean;
+  dragProps: HTMLAttributes<HTMLLIElement> & { draggable: boolean };
+  stopArming: HTMLAttributes<HTMLDivElement>;
   open: boolean;
   setMenuFor: (id: string | null) => void;
 }) {
@@ -113,12 +139,18 @@ function RoutineRow({
 
   return (
     <li
-      className={`group relative rounded-xl border border-zinc-800 bg-zinc-900/40 transition duration-300 hover:border-emerald-800 hover:bg-emerald-950 ${
+      {...dragProps}
+      className={`group relative select-none rounded-xl border border-zinc-800 bg-zinc-900/40 transition duration-300 hover:border-emerald-800 hover:bg-emerald-950 ${
         open ? "z-20" : ""
-      }`}
+      } ${dragging ? "opacity-40" : ""}`}
     >
-      {/* The whole card runs the routine; the menu sits above it. */}
-      <Link href={`/run/${routine.id}`} className="block py-3.5 pl-4 pr-14">
+      {/* The whole card runs the routine — and is the drag handle, so the
+          anchor's own native link-drag has to be switched off. */}
+      <Link
+        href={`/run/${routine.id}`}
+        draggable={false}
+        className="block py-3.5 pl-4 pr-28"
+      >
         <span className="block font-medium transition group-hover:text-emerald-100">
           {routine.name}
         </span>
@@ -129,7 +161,29 @@ function RoutineRow({
         </span>
       </Link>
 
-      <div ref={menuRef} className="absolute inset-y-0 right-2 flex items-center">
+      <div
+        ref={menuRef}
+        {...stopArming}
+        className="absolute inset-y-0 right-2 flex items-center text-zinc-600"
+      >
+        <button
+          type="button"
+          aria-label={`Move ${routine.name} up`}
+          onClick={() => reorderRoutines(index, index - 1)}
+          disabled={index === 0}
+          className="rounded-lg px-1.5 py-2 transition hover:bg-black/25 hover:text-emerald-100 disabled:opacity-30 disabled:hover:bg-transparent"
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          aria-label={`Move ${routine.name} down`}
+          onClick={() => reorderRoutines(index, index + 1)}
+          disabled={index === count - 1}
+          className="rounded-lg px-1.5 py-2 transition hover:bg-black/25 hover:text-emerald-100 disabled:opacity-30 disabled:hover:bg-transparent"
+        >
+          ↓
+        </button>
         <button
           type="button"
           aria-haspopup="menu"

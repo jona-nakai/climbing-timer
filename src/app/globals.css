@@ -29,6 +29,47 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Fades the sidebar out at both ends so the centred block is the one in focus.
+ */
+/*
+ * Fades toward the bottom only — the running block sits at the top, so fading
+ * there would dim the one thing that matters. Never reaches transparent: the
+ * blocks ahead sit back, they stay legible.
+ */
+.sidebar-fade {
+  --sidebar-fade: linear-gradient(
+    to bottom,
+    #000,
+    #000 60%,
+    rgb(0 0 0 / 0.25)
+  );
+  -webkit-mask-image: var(--sidebar-fade);
+  mask-image: var(--sidebar-fade);
+}
+
+/*
+ * The "up next" cell of the rep bar: dark for most of the cycle, one slow
+ * breath, then dark again. A steady pulse competes with the countdown.
+ */
+@keyframes rep-pulse {
+  0%,
+  50% {
+    opacity: 0;
+  }
+  72% {
+    opacity: 0.4;
+  }
+  94%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-rep-pulse {
+  animation: rep-pulse 3.2s ease-in-out infinite;
+}
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

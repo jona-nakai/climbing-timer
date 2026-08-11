@@ -1,3 +1,5 @@
+import type { SegmentKind } from "./types";
+
 let ctx: AudioContext | null = null;
 
 /** Must be called from a user gesture the first time, or the context stays suspended. */
@@ -41,12 +43,11 @@ export function playTick(): void {
 }
 
 /** Fires as a new segment begins — pitch tells you which kind. */
-export function playTransition(kind: "work" | "rest"): void {
-  if (kind === "work") {
-    tone(1047, 200, 0.25);
-  } else {
-    tone(659, 200, 0.22);
-  }
+export function playTransition(kind: SegmentKind): void {
+  if (kind === "work") tone(1047, 200, 0.25);
+  else if (kind === "rest") tone(659, 200, 0.22);
+  // A block break is the longer pause: drop another third so it's obvious.
+  else tone(523, 220, 0.22);
 }
 
 export function playFinish(): void {

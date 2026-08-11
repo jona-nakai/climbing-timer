@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use } from "react";
+import { HomeIcon } from "@/components/HomeIcon";
 import { RoutineEditor } from "@/components/RoutineEditor";
 import { useHydrated, useRoutine } from "@/lib/store";
 
@@ -22,9 +23,10 @@ export default function EditRoutinePage({
         <p className="text-zinc-300">That routine no longer exists.</p>
         <Link
           href="/"
-          className="mt-3 inline-block text-sm text-emerald-400 transition hover:text-emerald-300"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm text-emerald-400 transition hover:text-emerald-300"
         >
-          ← Back to routines
+          <HomeIcon />
+          Home
         </Link>
       </main>
     );
