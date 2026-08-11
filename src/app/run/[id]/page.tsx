@@ -168,15 +168,17 @@ function Runner({
     // sidebar does can push the clock out of view.
     <div className="flex h-[100dvh] flex-col-reverse overflow-hidden md:flex-row">
       {!sidebarOpen ? (
-        <aside className="flex shrink-0 items-center gap-3 border-t border-zinc-900 px-4 py-2 md:h-full md:w-14 md:flex-col md:gap-4 md:border-r md:border-t-0 md:px-0 md:py-3.5">
+        // Bigger glyphs and real padding around them on phones, where these
+        // are the only controls on the bar; back to rail size from md up.
+        <aside className="flex shrink-0 items-center gap-1 border-t border-zinc-900 px-2 py-1.5 md:h-full md:w-14 md:flex-col md:gap-4 md:border-r md:border-t-0 md:px-0 md:py-3.5">
           {/* A house, not an arrow: an arrow here reads as "expand". */}
           <Link
             href="/"
             aria-label="Back to routines"
             title="Back to routines"
-            className="text-zinc-600 transition hover:text-zinc-200"
+            className="rounded-lg p-2 text-zinc-600 transition hover:text-zinc-200 md:p-0"
           >
-            <HomeIcon />
+            <HomeIcon className="h-[22px] w-[22px] md:h-[18px] md:w-[18px]" />
           </Link>
           <button
             type="button"
@@ -184,20 +186,24 @@ function Runner({
             aria-label="Show routine"
             aria-expanded={false}
             title="Show routine"
-            className="text-zinc-600 transition hover:text-zinc-200"
+            className="rounded-lg p-2 text-zinc-600 transition hover:text-zinc-200 md:p-0"
           >
-            <PanelIcon open={false} />
+            <PanelIcon
+              open={false}
+              className="h-[22px] w-[22px] md:h-[18px] md:w-[18px]"
+            />
           </button>
-          <span className="ml-auto text-xs text-zinc-500 tabular md:hidden">
+          <span className="ml-auto px-1 text-sm text-zinc-500 tabular md:hidden">
             {elapsedLabel}
           </span>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
-            className="text-zinc-600 transition hover:text-zinc-200 md:mt-auto"
+            title="Settings"
+            className="rounded-lg p-2 text-zinc-600 transition hover:text-zinc-200 md:mt-auto md:p-0"
           >
-            <GearIcon />
+            <GearIcon className="h-[22px] w-[22px] md:h-[18px] md:w-[18px]" />
           </button>
         </aside>
       ) : (
@@ -207,9 +213,9 @@ function Runner({
               {/* Same house as the collapsed rail — one way home, one icon. */}
               <Link
                 href="/"
-                className="flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-200"
+                className="-ml-1 flex items-center gap-1.5 rounded-lg p-1 text-sm text-zinc-500 transition hover:text-zinc-200 md:ml-0 md:p-0"
               >
-                <HomeIcon />
+                <HomeIcon className="h-5 w-5 md:h-[18px] md:w-[18px]" />
                 Home
               </Link>
               <div className="-mr-1 flex items-center gap-1">
@@ -219,9 +225,12 @@ function Runner({
                   aria-label="Hide routine"
                   aria-expanded
                   title="Hide routine"
-                  className="rounded-lg px-2 py-1 text-zinc-600 transition hover:text-zinc-200"
+                  className="rounded-lg p-2 text-zinc-600 transition hover:text-zinc-200 md:px-2 md:py-1"
                 >
-                  <PanelIcon open />
+                  <PanelIcon
+                    open
+                    className="h-[22px] w-[22px] md:h-[18px] md:w-[18px]"
+                  />
                 </button>
               </div>
             </div>
@@ -557,17 +566,22 @@ function accentFor(kind: SegmentKind | "done" | undefined): string {
  * The same panel glyph in both states — one icon that toggles reads as a
  * toggle, where a hamburger next to a back arrow reads as two ways out.
  */
-function PanelIcon({ open }: { open: boolean }) {
+function PanelIcon({
+  open,
+  className = "h-[18px] w-[18px]",
+}: {
+  open: boolean;
+  className?: string;
+}) {
   return (
     <svg
-      width="18"
-      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={`shrink-0 ${className}`}
       aria-hidden="true"
     >
       <rect x="3" y="4" width="18" height="16" rx="2.5" />
@@ -589,11 +603,10 @@ function PanelIcon({ open }: { open: boolean }) {
   );
 }
 
-function GearIcon() {
+function GearIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
   return (
     <svg
-      width="18"
-      height="18"
+      className={`shrink-0 ${className}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

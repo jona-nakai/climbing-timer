@@ -1,15 +1,14 @@
 /** The one "back to the routine list" mark, wherever it appears. */
-export function HomeIcon() {
+export function HomeIcon({ className = "h-[18px] w-[18px]" }: { className?: string }) {
   return (
     <svg
-      width="18"
-      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.7"
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={`shrink-0 ${className}`}
       aria-hidden="true"
     >
       <path d="M3 10.5 12 3l9 7.5" />
