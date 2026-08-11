@@ -333,65 +333,81 @@ function Runner({
       )}
 
       <main
-        className={`flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-10 transition-colors duration-500 sm:py-16 ${stageBg}`}
+        className={`flex min-h-0 flex-1 overflow-y-auto transition-colors duration-500 ${stageBg}`}
       >
-        {segments.length === 0 ? (
-          <p className="text-zinc-400">This routine has no timed blocks yet.</p>
-        ) : (
-          <>
-            {/* Only breaks get a word — on a set the colour says it. Both
-                halves ride the same centred line, so nothing hangs off to one
-                side of the title: purple for the state you're in, grey for the
-                bit that qualifies the name below. */}
-            <p className="flex h-4 items-baseline gap-2 text-xs font-semibold uppercase tracking-[0.25em]">
-              <span className={`opacity-60 ${accent}`}>{stage}</span>
-              {lookahead && <span className="text-zinc-600">· Up next</span>}
-            </p>
-            <h2 className="mt-1.5 max-w-full truncate text-2xl font-medium sm:text-3xl">
-              {title}
-            </h2>
+        {/* Auto margins rather than justify-center: with the sidebar open on a
+            phone the face is taller than the space left, and a centred flex
+            child gets clipped at the top instead of scrolling to it. */}
+        <div className="m-auto flex w-full flex-col items-center px-6 py-10 sm:py-16">
+          {segments.length === 0 ? (
+            <p className="text-zinc-400">This routine has no timed blocks yet.</p>
+          ) : (
+            <>
+              {/* Only breaks get a word — on a set the colour says it. Both
+                  halves ride the same centred line, so nothing hangs off to one
+                  side of the title: purple for the state you're in, grey for the
+                  bit that qualifies the name below. */}
+              <p className="flex h-4 items-baseline gap-2 text-xs font-semibold uppercase tracking-[0.25em]">
+                <span className={`opacity-60 ${accent}`}>{stage}</span>
+                {lookahead && <span className="text-zinc-600">· Up next</span>}
+              </p>
+              <h2 className="mt-1.5 max-w-full truncate text-2xl font-medium sm:text-3xl">
+                {title}
+              </h2>
 
-            <div
-              className={`mt-4 text-[5rem] font-semibold leading-none tabular sm:mt-5 sm:text-[9rem] ${accent}`}
-            >
-              {formatClock(seconds)}
-            </div>
+              <div
+                className={`mt-4 text-[5rem] font-semibold leading-none tabular sm:mt-5 sm:text-[9rem] ${accent}`}
+              >
+                {formatClock(seconds)}
+              </div>
 
-            {/* Same slot on a set and on its breaks, so the rep you're on (or
-                about to start) never moves. */}
-            <div className="mt-5 flex h-10 w-full max-w-sm flex-col items-center gap-2">
-              {current && current.reps > 1 && !runner.done && (
-                <>
-                  <div className={`flex w-full items-center gap-1.5 ${accent}`}>
-                    {Array.from({ length: current.reps }, (_, i) => (
-                      <span
-                        key={i}
-                        className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100/10"
-                      >
-                        {i === current.rep - 1 && current.kind === "rest" ? (
-                          // Up next: pulses instead of filling, so the break's
-                          // own countdown can't read as rep progress.
-                          <span className="animate-rep-pulse absolute inset-0 rounded-full bg-current" />
-                        ) : (
-                          <span
-                            className="absolute inset-y-0 left-0 rounded-full bg-current"
-                            style={{
-                              width:
-                                i < current.rep - 1
-                                  ? "100%"
-                                  : i === current.rep - 1
-                                    ? `${progress * 100}%`
-                                    : "0%",
-                            }}
-                          />
-                        )}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-sm tabular text-zinc-500">{counter}</p>
+              {/* Same slot on a set and on its breaks, so the rep you're on (or
+                  about to start) never moves. */}
+              <div className="mt-5 flex h-10 w-full max-w-sm flex-col items-center gap-2">
+                {current && current.reps > 1 && !runner.done && (
+                  <>
+                    <div className={`flex w-full items-center gap-1.5 ${accent}`}>
+                      {Array.from({ length: current.reps }, (_, i) => (
+                        <span
+                          key={i}
+                          className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100/10"
+                        >
+                          {i === current.rep - 1 && current.kind === "rest" ? (
+                            // Up next: pulses instead of filling, so the break's
+                            // own countdown can't read as rep progress.
+                            <span className="animate-rep-pulse absolute inset-0 rounded-full bg-current" />
+                          ) : (
+                            <span
+                              className="absolute inset-y-0 left-0 rounded-full bg-current"
+                              style={{
+                                width:
+                                  i < current.rep - 1
+                                    ? "100%"
+                                    : i === current.rep - 1
+                                      ? `${progress * 100}%`
+                                      : "0%",
+                              }}
+                            />
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm tabular text-zinc-500">{counter}</p>
                 </>
               )}
 
+              {/* A break block has no reps to divide, so it gets one unbroken
+                  bar draining with its own countdown. */}
+              {lookahead && (
+                <div
+                  className={`h-1.5 w-full overflow-hidden rounded-full bg-zinc-100/10 ${accent}`}
+                >
+                  <span
+                    className="block h-full rounded-full bg-current"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Equal-weight side columns keep the play button dead centre as
@@ -430,8 +446,9 @@ function Runner({
                 Skip
               </button>
             </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </main>
 
       {settingsOpen && (
@@ -497,7 +514,7 @@ function SettingsDialog({
         <div className="mt-2 divide-y divide-zinc-900">
           <Toggle
             label="Transition beep"
-            hint="Tone when a block hands off to the next"
+            hint="Tone on every transition"
             on={sound.transition}
             onChange={(on) => onSoundChange({ ...sound, transition: on })}
           />
