@@ -54,10 +54,10 @@ body {
  */
 @keyframes rep-pulse {
   0%,
-  50% {
+  42% {
     opacity: 0;
   }
-  72% {
+  68% {
     opacity: 0.4;
   }
   94%,
@@ -67,7 +67,7 @@ body {
 }
 
 .animate-rep-pulse {
-  animation: rep-pulse 3.2s ease-in-out infinite;
+  animation: rep-pulse 2s ease-in-out infinite;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
